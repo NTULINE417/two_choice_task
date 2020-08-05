@@ -1,1 +1,2 @@
-# two_choice_task
+# Two Choice Task
+Two choice dynamic foraging task
