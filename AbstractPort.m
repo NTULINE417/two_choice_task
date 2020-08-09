@@ -1,6 +1,5 @@
 classdef AbstractPort < Loggable
     %ABSTRACTPORT A port mounts on the chamber wall.
-    %   Detailed explanation goes here
     
     properties (GetAccess = public, SetAccess = private)
         port_name
@@ -21,17 +20,29 @@ classdef AbstractPort < Loggable
         end
         
         function show_cue(obj)
+            %SHOW_CUE Show visual cue.
+            %   This will enable the LED on the port.
+            
             obj.set_cue_state(1);
             obj.log('show cue');
         end
         
         function stop_cue(obj)
+            %STOP_CUE Disable visual cue.
+            %   This will disable the LED on the port.
+            
             obj.set_cue_state(0);
             obj.log('stop cue');
         end
         
         function wait(obj)
             %WAIT Wait for mice to trigger this port.
+            %   This will first get current detector state, and later wait
+            %   until the state is different. Visual cue is controlled
+            %   automatically.
+            %
+            %   After the state toggle event occured, this method will call
+            %   the action method.
             state0 = obj.get_detector_state();
             
             obj.show_cue();
