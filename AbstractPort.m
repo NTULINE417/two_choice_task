@@ -1,4 +1,4 @@
-classdef AbstractPort
+classdef AbstractPort < Loggable
     %ABSTRACTPORT A port mounts on the chamber wall.
     %   Detailed explanation goes here
     
@@ -11,7 +11,8 @@ classdef AbstractPort
     
     methods
         function obj = AbstractPort(device, name, pin_def)
-            % Construct an instance of this class.
+            obj@Loggable(name) % we use port name as log identifier
+            
             obj.device = device;
             
             obj.port_name = name;
@@ -49,11 +50,6 @@ classdef AbstractPort
         function state = get_detector_state(obj)
             state = readDigitalPin(obj.device, obj.detector_pin);
             state = logical(state);
-        end
-        
-        function log(obj, message)
-            message = join([obj.port_name, ' ', message]);
-            logger(message);
         end
     end
     

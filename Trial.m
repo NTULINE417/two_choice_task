@@ -12,6 +12,7 @@ classdef Trial
         init
         l_choice
         r_choice
+        reward_port
         lickometer
     end
     
@@ -20,8 +21,9 @@ classdef Trial
             obj.trial_name = name;
             
             obj.init = ports.init;
-            obj.l_choice = ports.l_choice;
-            obj.r_choice = ports.r_choice;
+            obj.l_choice = ports.left;
+            obj.r_choice = ports.right;
+            obj.reward_port = ports.reward;
             obj.lickometer = ports.lickometer;
             
             if numel(gt) ~= 2
@@ -78,9 +80,36 @@ classdef Trial
             % determine whether the mouse get reward
             obj.log(join(['ground truth', num2str(obj.gt)]));
             result = any(result & obj.gt);
+            
+            % wait for it to step in the reward port
+            obj.reward_port.start_cue();
+            
+            % wait till enter...
+            state = false;
+            while ~state
+                state = obj.reward_port.get_detector_state();
+            end
+            obj.log('enter reward port');
+            
+            % dispense
             if result
                 obj.lickometer.give_reward();
+            else
+                obj.log('no reward');
             end
+            
+            % ... wait till exit
+            state = true;
+            while state
+                state = obj.reward_port.get_detector_state();
+                
+                % NOTE this is _not_ accurate
+                lick_state = obj.lickometer.get_detector_state();
+                obj.log(join(['lick state', num2str(lick_state)]));
+            end
+            obj.log('exit reward port');
+            
+            obj.reward_port.stop_cue();
         end
     end
     

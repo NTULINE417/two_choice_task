@@ -13,12 +13,15 @@ I_port = ChoicePort(device, 'INITIATION', pin_defs.init);
 
 dispenser = Dispenser(device, 'DISPENSER', pin_defs.reward.lickometer.dispenser);
 dispenser.set_invert(false);
-M_port = RewardPort(device, 'REWARD', pin_defs.reward, dispenser);
+lickometer_port = Lickometer(device, 'LICKOMETER', pin_defs.lickometer, dispenser);
+
+reward_port = RewardPort(device, 'REWARD', pin_defs.reward);
 
 ports.init = I_port;
-ports.l_choice = L_port;
-ports.r_choice = R_port;
-ports.lickometer = M_port;
+ports.left = L_port;
+ports.right = R_port;
+ports.reward = reward_port;
+ports.lickometer = lickometer_port;
 
 %% setup session
 logger('open', 'session_1.txt');

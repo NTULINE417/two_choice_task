@@ -24,15 +24,14 @@ dispenser.en = 'A0';
 
 % lickometer
 lickometer.dispenser = dispenser;
-lickometer.detector = '';
+lickometer.detector = 'A2';
 
 %% summary
-reward.lickometer = lickometer;
-
 pin_defs.left = left;
 pin_defs.right = right;
 pin_defs.init = init;
 pin_defs.reward = reward;
+pin_defs.lickometer = lickometer;
 
 %% save it
 save('pin_defs.mat', 'pin_defs');

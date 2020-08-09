@@ -2,8 +2,7 @@ classdef Dispenser < Motor
     %DISPENSER Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (GetAccess = public, SetAccess = private)
-        name 
+    properties (GetAccess = public, SetAccess = private) 
         is_invert
         default_reward_ul 
     end
@@ -14,35 +13,37 @@ classdef Dispenser < Motor
     end
     
     methods
-        function obj = Dispenser(device, name, pin_def, freq, factor, volume)
-            obj@Motor(device, pin_def);
-            
-            % set name for logging
-            obj.name = name;
-            
-            if nargin < 6
-                volume = 6;
+        function obj = Dispenser(device, name, pin_def, options)
+            arguments
+                device
+                name
+                pin_def
+                options.Frequency (1,1) double = 100
+                options.Factor (1,1) double = 20/6
+                options.DefaultVolume (1,1) double = 6
             end
-            obj.default_reward_ul = volume;
             
-            if nargin < 4
-                % default frequency and conversion factor
-                % 20 ms, 100 Hz = 6 uL
-                freq = 100;
-                factor = 20/6;
-            end
-            obj.freq = freq;
-            obj.factor = factor;
+            obj@Motor(device, pin_def, 'Name', name);
+            
+            % default dispensed reward, 6 uL
+            obj.default_reward_ul = options.DefaultVolume;
+
+            % default frequency and conversion factor
+            % calculated from: 
+            %   20 ms, 100 Hz = 6 uL
+            obj.freq = options.Frequency;
+            obj.factor = options.Factor;
             
             obj.is_invert = false;
         end
         
         function dispense_ul(obj, ul)
-            if nargin < 2
-                ul = obj.default_reward_ul;
+            arguments
+                obj
+                ul (1,1) double = obj.default_reward_ul
             end
             
-            message = sprintf('dispense %d ul', ul);
+            message = sprintf('start dispense %d ul', ul);
             obj.log(message); 
             
             dt = obj.factor * ul;
@@ -62,13 +63,6 @@ classdef Dispenser < Motor
             else
                 obj.set_direction('forward');
             end
-        end
-    end
-    
-    methods (Access = protected)
-        function log(obj, message)
-            message = join([obj.name, ' ', message]);
-            logger(message);
         end
     end
 end

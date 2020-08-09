@@ -1,4 +1,4 @@
-classdef Motor < handle
+classdef Motor < Loggable
     %MOTOR A class that represent a A4988 controlled servo motor.
     properties (GetAccess = public, SetAccess = private)
         device
@@ -14,7 +14,15 @@ classdef Motor < handle
     end
     
     methods
-        function obj = Motor(device, pin_def)
+        function obj = Motor(device, pin_def, options)
+            arguments
+                device 
+                pin_def
+                options.Name (1,1) string = 'MOTOR'
+            end
+    
+            obj@Loggable(options.Name);
+            
             obj.device = device;
             obj.dir_pin = pin_def.dir;
             obj.step_pin = pin_def.step;
@@ -28,26 +36,25 @@ classdef Motor < handle
             
             % ensure motor is not stepped through during startup
             obj.set_digital_output_state(obj.dir_pin, 0);
-            configurePin(obj.device, obj.step_pin, 'Unset');
+            obj.reset_step_pin();
             obj.set_digital_output_state(obj.step_pin, 0);
         end
-        
+       
         function set_direction(obj, dir)
+            %SET_DIRECTION Set motor direction.
+            %   Set motor direction pin state.
+            
+            arguments
+                obj
+                dir (1,1) string {mustBeMember(dir, {'forward', 'reverse'})}
+            end
+            
             if obj.is_moving
                 error('motor is still moving');
             end
             
-            if nargin > 1
-                if strcmp(dir, 'forward')
-                    obj.direction = 1;
-                elseif strcmp(dir, 'reverse')
-                    obj.direction = 0;
-                else
-                    error('direction should be ''forward'' or ''reverse''');
-                end  
-            end
-            
             obj.set_digital_output_state(obj.dir_pin, obj.direction);
+            obj.log('set direction to ''%s''', dir);
         end
         
         function dir = get_direction(obj)
@@ -61,7 +68,6 @@ classdef Motor < handle
         function step(obj, n_step, freq)
             obj.set_direction();
             
-            obj.is_moving = true;
             obj.enable();
             
             dt2 = (1/freq) / 2; % half cycle
@@ -73,18 +79,13 @@ classdef Motor < handle
             end
             
             obj.disable();
-            obj.is_moving = false;
         end
         
         function move(obj, freq, duration)
-            obj.set_direction();
-            
-            obj.is_moving = true;
             obj.enable();
             
             if nargin < 3
                 error('unlimited move is not functioning properly yet');
-                duration = 1; % move unlimited until stop
             end
             % duration is in seconds
             duration = duration / 1000;
@@ -92,10 +93,9 @@ classdef Motor < handle
             pause(duration); % wait, arduino function is async
             
             obj.disable();
-            obj.is_moving = false;
             
             % reset
-            configurePin(obj.device, obj.step_pin, 'Unset');
+            obj.reset_step_pin();
         end
         
         function delete(obj)
@@ -103,17 +103,30 @@ classdef Motor < handle
         end
     end
     
-    methods (Access = private)
+    methods (Access = protected)
         function enable(obj)
+            obj.is_moving = true;
+            
             obj.set_digital_output_state(obj.en_pin, 0);
+            obj.log('motor enabled');
         end
         
         function disable(obj)
             obj.set_digital_output_state(obj.en_pin, 1);
+            obj.log('motor disabled');
+            
+            obj.is_moving = false;
         end
         
         function set_digital_output_state(obj, pin, state)
             writeDigitalPin(obj.device, pin, state);
+        end
+        
+        function reset_step_pin(obj)
+            %RESET_STEP_PIN Reset step pin to unset state.
+            %   We need this function to ensure step pin is not fixated to
+            %   PWM mode.
+            configurePin(obj.device, obj.step_pin, 'Unset');
         end
     end
 end
